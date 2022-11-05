@@ -376,6 +376,11 @@ export class MatrixEvent extends TypedEventEmitter<MatrixEventEmittedEvents, Mat
      */
     public forwardLooking = true;
 
+    /* flag to indicate that the event was redacted, but we fetched the
+     * unredacted content from the server using room moderator powers.
+     */
+    public viewingRedactedContent = false;
+
     /* If the event is a `m.key.verification.request` (or to_device `m.key.verification.start`) event,
      * `Crypto` will set this the `VerificationRequest` for the event
      * so it can be easily accessed from the timeline.
@@ -1266,7 +1271,7 @@ export class MatrixEvent extends TypedEventEmitter<MatrixEventEmittedEvents, Mat
      * @returns True if this event has been redacted
      */
     public isRedacted(): boolean {
-        return Boolean(this.getUnsigned().redacted_because);
+        return Boolean(this.getUnsigned().redacted_because && !this.viewingRedactedContent);
     }
 
     /**
@@ -1402,6 +1407,19 @@ export class MatrixEvent extends TypedEventEmitter<MatrixEventEmittedEvents, Mat
         }
 
         this.localTimestamp = Date.now() - this.getAge()!;
+    }
+
+    public showRedactedContent(event: object): void {
+        const oldUnsigned = this.getUnsigned();
+        this.event = event;
+        this.clearEvent = undefined;
+        if (!this.event.unsigned) {
+            this.event.unsigned = {};
+        }
+        this.event.unsigned.redacted_because = oldUnsigned.redacted_because;
+        this.viewingRedactedContent = true;
+        this.setStatus(null);
+        this.localTimestamp = Date.now() - (this.getAge() ?? 0);
     }
 
     /**

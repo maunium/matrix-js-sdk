@@ -8260,6 +8260,25 @@ export class MatrixClient extends TypedEventEmitter<EmittedEvents, ClientEventHa
     }
 
     /**
+     * Get the content of a redacted event event in a room by its event id.
+     * @param roomId
+     * @param eventId
+     *
+     * @return Resolves to an object containing the event.
+     * @return Rejects: with an error response.
+     */
+    public unstableFetchRedactedRoomEventContent(roomId: string, eventId: string): Promise<IMinimalEvent> {
+        const path = utils.encodeUri("/rooms/$roomId/event/$eventId", {
+            $roomId: roomId,
+            $eventId: eventId,
+        });
+        const query = {
+            "fi.mau.msc2815.include_unredacted_content": "true",
+        };
+        return this.http.authedRequest(Method.Get, path, query);
+    }
+
+    /**
      * @param includeMembership - the membership type to include in the response
      * @param excludeMembership - the membership type to exclude from the response
      * @param atEventId - the id of the event for which moment in the timeline the members should be returned for
